@@ -9,6 +9,8 @@ load_dotenv()
 # Get the bot token from environment variables
 TOKEN_API = os.getenv("TOKEN_API")
 
+# Create an instance of the bot
+bot = telebot.TeleBot(TOKEN_API)
 # Placeholder for the chat_id
 chat_id = None
 
