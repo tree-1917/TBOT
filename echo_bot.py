@@ -1,8 +1,13 @@
 import telebot
 from telebot import types
+from dotenv import load_dotenv
+import os
 
-# Create an instance of the bot
-bot = telebot.TeleBot("5788483192:AAF56JEcKQRgnquOvJBxzX99bWqY8q51NTU")
+# Load environment variables from .env file
+load_dotenv()
+
+# Get the bot token from environment variables
+TOKEN_API = os.getenv("TOKEN_API")
 
 # Placeholder for the chat_id
 chat_id = None
