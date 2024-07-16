@@ -10,7 +10,6 @@ def close_connection(conn, cursor):
     cursor.close()
     conn.close()
 
-
 # Function to create tables if they do not exist
 def create_tables():
     conn = connect_db()
@@ -34,19 +33,28 @@ def create_tables():
             message_id INTEGER NOT NULL,
             chat_id INTEGER NOT NULL,
             type TEXT NOT NULL,
-            FOREIGN KEY (topic_id) REFERENCES topics(topic_id)
+            FOREIGN KEY (topic_id) REFERENCES topics(topic_id),
             UNIQUE (topic_id, source_id)
+        )
+    ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS admins (
+            id INTEGER PRIMARY KEY,
+            admin_name TEXT NOT NULL,
+            chat_id INTEGER NOT NULL,
+            UNIQUE(chat_id)
         )
     ''')
 
     conn.commit()
     close_connection(conn, cursor)
 
-# Function to qurey Check Topic
-def check_topic(topic_id) :
+# Function to query Check Topic
+def check_topic(topic_id):
     conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute('SELECT topic_name from topics where topic_id = ?', (topic_id,))
+    cursor.execute('SELECT topic_name FROM topics WHERE topic_id = ?', (topic_id,))
     topic = cursor.fetchone()
     conn.commit() 
     close_connection(conn, cursor)
@@ -56,12 +64,12 @@ def check_topic(topic_id) :
 def check_source(source_id):
     conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute('SELECT source_name from sources where source_id = ?', (source_id,))
+    cursor.execute('SELECT source_name FROM sources WHERE source_id = ?', (source_id,))
     source = cursor.fetchone()
     conn.commit() 
     close_connection(conn, cursor)
     return False if source else True 
-    
+
 # Function to insert a new topic into the topics table
 def insert_topic(topic_id, topic_name):
     conn = connect_db()
@@ -79,6 +87,24 @@ def insert_source(topic_id, source_id, source_name, message_id, chat_id, type):
     conn.commit()
     close_connection(conn, cursor)
 
+# Function to insert a new admin into the admins table
+def insert_admin(admin_name, chat_id):
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute('INSERT INTO admins (admin_name, chat_id) VALUES (?, ?)', (admin_name, chat_id))
+    conn.commit()
+    close_connection(conn, cursor)
+
+# Function to check if a user is an admin
+def check_if_admin(chat_id):
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute('SELECT admin_name FROM admins WHERE chat_id = ?', (chat_id,))
+    admin = cursor.fetchone()
+    conn.commit()
+    close_connection(conn, cursor)
+    return True if admin else False
+
 # Function to fetch all topics
 def fetch_all_topics():
     conn = connect_db()
@@ -92,9 +118,7 @@ def fetch_all_topics():
 def fetch_all_sources(topic_id):
     conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute('''
-        SELECT source_id, source_name FROM sources WHERE topic_id = ?
-    ''', (topic_id,))
+    cursor.execute('SELECT source_id, source_name FROM sources WHERE topic_id = ?', (topic_id,))
     sources = cursor.fetchall()
     close_connection(conn, cursor)
     return sources
@@ -103,9 +127,7 @@ def fetch_all_sources(topic_id):
 def fetch_target_source(source_id):
     conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute('''
-        SELECT * FROM sources WHERE source_id = ?
-    ''', (source_id,))
+    cursor.execute('SELECT * FROM sources WHERE source_id = ?', (source_id,))
     source = cursor.fetchone()
     conn.close()
-    return source    
+    return source
