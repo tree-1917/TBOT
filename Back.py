@@ -26,14 +26,17 @@ def handle_start(message):
     chat_id = message.chat.id
     remove_keyboard_markup = types.ReplyKeyboardRemove()
     bot.send_message(chat_id, "👋 Click 'Start' to begin.", reply_markup=remove_keyboard_markup)
-    UI.show_start_button(chat_id)
+    markup = UI.show_start_button() # Create UI 
+    bot.send_message(chat_id, "🚀 Click 'Start' to begin.", reply_markup=markup)
 
 # Handler for handling button 'Start'
 @bot.message_handler(func=lambda message: message.text == 'Start')
 def handle_start_button(message):
     global chat_id
     chat_id = message.chat.id
-    UI.show_options(chat_id)
+    markup = UI.show_options() # Create UI 
+    bot.send_message(chat_id, "👩‍🏫 Choose 'teacher' or 👨‍🎓 'student':", reply_markup=markup)
+    
 
 # Handler for /restart command
 @bot.message_handler(commands=['restart'])
@@ -47,12 +50,14 @@ def restart_chat(message):
 # Handler for handling button 'teacher'
 @bot.message_handler(func=lambda message: message.text == 'teacher')
 def handle_teacher(message):
-    UI.setup_buttons_teacher(message.chat.id)
+    markup = UI.setup_buttons_teacher() # Create UI 
+    bot.send_message(chat_id, "📋 Choose one:", reply_markup=markup)
 
 # Handler for handling button 'student'
 @bot.message_handler(func=lambda message: message.text == 'student')
 def handle_student(message):
-    UI.setup_buttons_student(message.chat.id)
+    markup = UI.setup_buttons_student()
+    bot.send_message(chat_id, "📋 Choose one:", reply_markup=markup)
 
 # Handler for handling button 'upload topic' by teacher
 @bot.message_handler(func=lambda message: message.text == 'upload topic' and message.chat.id == chat_id)
