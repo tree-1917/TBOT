@@ -4,8 +4,7 @@ from telebot import types
 from dotenv import load_dotenv
 import UI
 import os
-from database import insert_topic, insert_source, fetch_all_topics, fetch_all_sources, fetch_sources_by_topic, close_connection, create_tables
-
+from database import insert_topic, insert_source, fetch_all_topics, fetch_all_sources, fetch_target_source, close_connection, create_tables
 # Load environment variables from .env file
 load_dotenv()
 
@@ -102,7 +101,7 @@ def handle_media(message):
 @bot.message_handler(func=lambda message: message.text.startswith('source_'))
 def send_source(message):
     source_id = message.text.strip()
-    sources = fetch_all_sources(source_id)
+    sources = fetch_target_source(source_id)
     
     if sources:
         for source in sources:
@@ -114,7 +113,7 @@ def send_source(message):
 @bot.message_handler(func=lambda message: message.text.startswith('topic_'))
 def show_sources_in_topic(message):
     topic_id = message.text.strip()
-    sources = fetch_sources_by_topic(topic_id)
+    sources = fetch_all_sources(topic_id)
     
     if sources:
         response = f"📚 Sources for Topic {topic_id}:\n"

@@ -71,8 +71,19 @@ def fetch_all_sources(topic_id):
     conn = connect_db()
     cursor = conn.cursor()
     cursor.execute('''
-        SELECT source_id, source_name, message_id, chat_id, type FROM sources WHERE topic_id = ?
+        SELECT source_id, source_name FROM sources WHERE topic_id = ?
     ''', (topic_id,))
     sources = cursor.fetchall()
     close_connection(conn, cursor)
     return sources
+
+# Function to fetch a specific source by source_id
+def fetch_target_source(source_id):
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT * FROM sources WHERE source_id = ?
+    ''', (source_id,))
+    source = cursor.fetchone()
+    conn.close()
+    return source    
