@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import UI
 import os
 from database import insert_topic, insert_source, fetch_all_topics, fetch_all_sources, fetch_target_source, close_connection, create_tables
+
 # Load environment variables from .env file
 load_dotenv()
 
@@ -127,5 +128,3 @@ def show_sources_in_topic(message):
 # Run the bot
 bot.infinity_polling()
 
-# Close the SQLite connection when the bot stops
-close_connection()
