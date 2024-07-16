@@ -30,12 +30,12 @@ def handle_start(message):
     bot.send_message(chat_id, "🚀 Click 'Start' to begin.", reply_markup=markup)
 
 # Handler for handling button 'Start'
-@bot.message_handler(func=lambda message: message.text == 'Start')
+@bot.message_handler(func=lambda message: message.text == 'أبدا')
 def handle_start_button(message):
     global chat_id
     chat_id = message.chat.id
     markup = UI.show_options() # Create UI 
-    bot.send_message(chat_id, "👩‍🏫 Choose 'teacher' or 👨‍🎓 'student':", reply_markup=markup)
+    bot.send_message(chat_id, "👳 Choose 'teacher' or 👨‍🎓 'student':", reply_markup=markup)
     
 
 # Handler for /restart command
@@ -48,7 +48,7 @@ def restart_chat(message):
     handle_start(message)  # Call handle_start to display the 'Start' button
 
 # Handler for handling button 'teacher'
-@bot.message_handler(func=lambda message: message.text == 'teacher')
+@bot.message_handler(func=lambda message: message.text == '👳 شيخ')
 def handle_teacher(message):
     global chat_id
     chat_id = message.chat.id
@@ -56,7 +56,7 @@ def handle_teacher(message):
     bot.send_message(chat_id, "📋 Choose one:", reply_markup=markup)
 
 # Handler for handling button 'student'
-@bot.message_handler(func=lambda message: message.text == 'student')
+@bot.message_handler(func=lambda message: message.text == '🧑‍🎓 طالب')
 def handle_student(message):
     global chat_id
     chat_id = message.chat.id
@@ -64,12 +64,12 @@ def handle_student(message):
     bot.send_message(chat_id, "📋 Choose one:", reply_markup=markup)
 
 # Handler for handling button 'upload topic' by teacher
-@bot.message_handler(func=lambda message: message.text == 'upload topic' and message.chat.id == chat_id)
+@bot.message_handler(func=lambda message: message.text == '🔼 أرفع محتوي' and message.chat.id == chat_id)
 def handle_upload_topic_teacher(message):
     bot.reply_to(message, "📄 Please upload a PDF and provide a description with #topic_name #topic_id #Source_id #Source_name in your message.")
 
 # Handler for handling button 'topics' by student
-@bot.message_handler(func=lambda message: message.text == 'topics')
+@bot.message_handler(func=lambda message: message.text == '📚المواد')
 def handle_topics_student(message):
     topics = fetch_all_topics()
     
@@ -114,7 +114,7 @@ def send_source(message):
     source_id = message.text.strip().split("_")[1]
     source = fetch_target_source(source_id)
     if source:
-        bot.forward_message(message.chat.id, source[5], source[4])
+        bot.copy_message(chat_id=message.chat.id, from_chat_id=source[5], message_id=source[4], caption='')
     else:
         bot.send_message(message.chat.id, "❌ Invalid ID or no sources found.")
 
