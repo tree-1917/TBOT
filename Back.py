@@ -25,7 +25,7 @@ def handle_start(message):
     global chat_id
     chat_id = message.chat.id
     remove_keyboard_markup = types.ReplyKeyboardRemove()
-    bot.send_message(chat_id, "👋 Click 'Start' to begin.", reply_markup=remove_keyboard_markup)
+    bot.send_message(chat_id, "👋 Hello Again", reply_markup=remove_keyboard_markup)
     markup = UI.show_start_button() # Create UI 
     bot.send_message(chat_id, "🚀 Click 'Start' to begin.", reply_markup=markup)
 
@@ -50,12 +50,16 @@ def restart_chat(message):
 # Handler for handling button 'teacher'
 @bot.message_handler(func=lambda message: message.text == 'teacher')
 def handle_teacher(message):
+    global chat_id
+    chat_id = message.chat.id
     markup = UI.setup_buttons_teacher() # Create UI 
     bot.send_message(chat_id, "📋 Choose one:", reply_markup=markup)
 
 # Handler for handling button 'student'
 @bot.message_handler(func=lambda message: message.text == 'student')
 def handle_student(message):
+    global chat_id
+    chat_id = message.chat.id
     markup = UI.setup_buttons_student()
     bot.send_message(chat_id, "📋 Choose one:", reply_markup=markup)
 
