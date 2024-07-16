@@ -4,7 +4,7 @@ from telebot import types
 from dotenv import load_dotenv
 import UI
 import os
-from database import insert_topic, insert_source, fetch_all_topics, fetch_all_sources, fetch_target_source, close_connection, create_tables
+from database import insert_topic, insert_source, fetch_all_topics, fetch_all_sources, fetch_target_source, create_tables, check_topic, check_source
 
 # Load environment variables from .env file
 load_dotenv()
@@ -66,7 +66,7 @@ def handle_student(message):
 # Handler for handling button 'upload topic' by teacher
 @bot.message_handler(func=lambda message: message.text == 'upload topic' and message.chat.id == chat_id)
 def handle_upload_topic_teacher(message):
-    bot.reply_to(message, "📄 Please upload a PDF and provide a description with #light #Source_id #Source_name in your message.")
+    bot.reply_to(message, "📄 Please upload a PDF and provide a description with #topic_name #topic_id #Source_id #Source_name in your message.")
 
 # Handler for handling button 'topics' by student
 @bot.message_handler(func=lambda message: message.text == 'topics')
@@ -76,7 +76,7 @@ def handle_topics_student(message):
     if topics:
         response = "📚 Topics:\n"
         for topic_name, topic_id in topics:
-            response += f"{topic_name} [{topic_id}]\n"
+            response += f"{topic_name} [topic_{topic_id}]\n"
     else:
         response = "No topics available."
     
@@ -85,11 +85,11 @@ def handle_topics_student(message):
 # Handler for storing sources with message IDs
 @bot.message_handler(content_types=['document', 'audio'])
 def handle_media(message):
-    if message.caption and '#light' in message.caption:
+    if message.caption :
         try:
             parts = message.caption.split("#")
             if len(parts) < 5:
-                bot.reply_to(message, "❌ Invalid format. Please include #trem_name #topic_id #source_id #source_name in your message.")
+                bot.reply_to(message, "❌ Invalid format. Please include #topic_name #topic_id #source_id #source_name in your message.")
                 return
             
             topic_name = parts[1].strip()  
@@ -98,40 +98,38 @@ def handle_media(message):
             source_name = parts[4].strip()
 
             # Insert into SQLite database using database.py functions
-            insert_topic(topic_id, topic_name)
-            insert_source(topic_id, source_id, source_name, message.message_id, message.chat.id, message.content_type)
-
+            is_topic =  check_topic(topic_id)
+            if is_topic :  # if topic not exists before 
+                insert_topic(topic_id, topic_name)
+            insert_source(topic_id, source_id, source_name, message.message_id, message.chat.id, message.content_type) 
             bot.reply_to(message, "✅ Source uploaded and saved.")
         except Exception as e:
             bot.reply_to(message, f"❌ An error occurred: {str(e)}")
     else:
-        bot.reply_to(message, "❌ Please include #trem_name #topic_id #source_id #source_name in your message to save the source.")
+        bot.reply_to(message, "❌ Please include #topic_name #topic_id #source_id #source_name in your message to save the source.")
 
 # Handler for sending sources based on source_id
 @bot.message_handler(func=lambda message: message.text.startswith('source_'))
 def send_source(message):
-    source_id = message.text.strip()
-    sources = fetch_target_source(source_id)
-    
-    if sources:
-        for source in sources:
-            bot.forward_message(message.chat.id, source['chat_id'], source['message_id'])
+    source_id = message.text.strip().split("_")[1]
+    source = fetch_target_source(source_id)
+    if source:
+        bot.forward_message(message.chat.id, source[5], source[4])
     else:
         bot.send_message(message.chat.id, "❌ Invalid ID or no sources found.")
 
 # Handler for displaying all sources in a topic based on topic_id
 @bot.message_handler(func=lambda message: message.text.startswith('topic_'))
 def show_sources_in_topic(message):
-    topic_id = message.text.strip()
+    topic_id = message.text.strip().split('_')[1]
     sources = fetch_all_sources(topic_id)
     
     if sources:
         response = f"📚 Sources for Topic {topic_id}:\n"
         for source in sources:
-            response += f"Source Name: {source['source_name']}, Source ID: {source['source_id']}\n"
+            response += f"{source[1]} [source_{source[0]}]\n"
     else:
         response = f"No sources found for Topic {topic_id}."
-    
     bot.send_message(message.chat.id, response)
 
 # Run the bot

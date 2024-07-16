@@ -10,6 +10,7 @@ def close_connection(conn, cursor):
     cursor.close()
     conn.close()
 
+
 # Function to create tables if they do not exist
 def create_tables():
     conn = connect_db()
@@ -34,12 +35,33 @@ def create_tables():
             chat_id INTEGER NOT NULL,
             type TEXT NOT NULL,
             FOREIGN KEY (topic_id) REFERENCES topics(topic_id)
+            UNIQUE (topic_id, source_id)
         )
     ''')
 
     conn.commit()
     close_connection(conn, cursor)
 
+# Function to qurey Check Topic
+def check_topic(topic_id) :
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute('SELECT topic_name from topics where topic_id = ?', (topic_id,))
+    topic = cursor.fetchone()
+    conn.commit() 
+    close_connection(conn, cursor)
+    return False if topic else True 
+
+# Function to Check Source
+def check_source(source_id):
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute('SELECT source_name from sources where source_id = ?', (source_id,))
+    source = cursor.fetchone()
+    conn.commit() 
+    close_connection(conn, cursor)
+    return False if source else True 
+    
 # Function to insert a new topic into the topics table
 def insert_topic(topic_id, topic_name):
     conn = connect_db()
