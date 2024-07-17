@@ -3,7 +3,8 @@ from telebot import types
 from dotenv import load_dotenv
 import UI
 import os
-from database import insert_topic, insert_source, fetch_all_topics, fetch_all_sources, fetch_target_source, create_tables, check_topic,check_if_admin,insert_admin
+from database import insert_topic, insert_source, fetch_all_topics,fetch_all_sources, fetch_target_source,\
+                     create_tables, check_topic,check_if_admin,insert_admin,insert_message
 # Load environment variables from .env file
 load_dotenv()
 
@@ -29,7 +30,7 @@ def handle_start(message):
     bot.send_message(chat_id, "🚀 اضغط على 'ابدأ' للبدء.", reply_markup=markup)
 
 # Handler for handling button 'Start'
-@bot.message_handler(func=lambda message: message.text == 'أبدا')
+@bot.message_handler(func=lambda message: message.text == '🚀 أبدا')
 def handle_start_button(message):
     global chat_id
     chat_id = message.chat.id
@@ -44,6 +45,8 @@ def restart_chat(message):
     remove_keyboard_markup = types.ReplyKeyboardRemove()
     bot.send_message(chat_id, "🔄 تم إعادة ضبط الدردشة. يرجى الضغط على 'ابدأ' للبدء مجددًا.", reply_markup=remove_keyboard_markup)
     handle_start(message)  # Call handle_start to display the 'Start' button
+
+# ======== Admin ========== # 
 # Handle Admin Level
 @bot.message_handler(commands=['addAdmin'])
 def add_admin(message): 
@@ -51,6 +54,7 @@ def add_admin(message):
     chat_id = message.chat.id
     bot.send_message(chat_id, "🚫 أدخل المفتاح السري لإضافة نفسك كمسؤول:")
     bot.register_next_step_handler(message, ask_for_admin_key)
+
 # Register Admin
 def ask_for_admin_key(message):
     if message.text == KEY :
@@ -59,6 +63,7 @@ def ask_for_admin_key(message):
     else:
         bot.send_message(message.chat.id, "❌ مفتاح غير صحيح. يرجى المحاولة مرة أخرى.")
         handle_start(message)
+
 # Save Admin 
 def save_admin(message):
     admin_name = message.text
@@ -66,7 +71,32 @@ def save_admin(message):
     insert_admin(admin_name, chat_id)
     bot.send_message(chat_id, f"✅ تمت إضافتك كمسؤول، {admin_name}.")
     handle_teacher(message)
+# ========================== # 
+# ======== Send Question ======== #
+# Handler to process the user's message after they click /sendMessage
+@bot.message_handler(commands=['sendMessage'])
+def handle_send_message_command(message):
+    bot.send_message(message.chat.id, "Please enter your message:")
+    bot.register_next_step_handler(message, save_message)
 
+# Function to save the user's message in the database
+def save_message(message):
+    try:
+        sender_name = f'{message.chat.first_name} {message.chat.last_name}'
+        chat_id = message.chat.id
+        message_id = message.message_id
+        # Insert message into the database
+        insert_message(sender_name, chat_id, message_id)
+        # Notify user that the message has been saved
+        bot.send_message(message.chat.id, "Your message has been saved in the database.") 
+    except Exception as e:
+        print(f"Error occurred: {str(e)}")
+# Handler for the command that triggers the prompt in Arabic
+@bot.message_handler(func=lambda message: message.text == '📩 ارسل سؤال')
+def send_question_command(message):
+    bot.send_message(message.chat.id, "Click here to send your question: /sendMessage")
+    
+# ========================== # 
 # Handler for handling button 'teacher'
 @bot.message_handler(func=lambda message: message.text == '👳 شيخ')
 def handle_teacher(message):
@@ -125,7 +155,7 @@ def handle_media(message):
 
             # Insert into SQLite database using database.py functions
             is_topic = check_topic(topic_id)
-            if not is_topic:  # if topic does not exist before
+            if is_topic:  # if topic does not exist before
                 insert_topic(topic_id, topic_name)
             insert_source(topic_id, source_id, source_name, message.message_id, message.chat.id, message.content_type)
             bot.reply_to(message, "✅ تم تحميل وحفظ المصدر.")

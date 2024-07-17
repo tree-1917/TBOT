@@ -46,7 +46,14 @@ def create_tables():
             UNIQUE(chat_id)
         )
     ''')
-
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS messages (
+            id INTEGER PRIMARY KEY, 
+            sender_name TEXT NOT NULL,
+            chat_id INTEGER NOT NULL,
+            message_id INTEGER NOT NULL
+        )            
+    ''')
     conn.commit()
     close_connection(conn, cursor)
 
@@ -129,5 +136,38 @@ def fetch_target_source(source_id):
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM sources WHERE source_id = ?', (source_id,))
     source = cursor.fetchone()
-    conn.close()
+    close_connection(conn,cursor)
     return source
+
+# Function to insert a new message 
+def insert_message(sender_name,chat_id,message_id):
+    conn = connect_db() 
+    cursor = conn.cursor() 
+    cursor.execute('INSERT INTO messages (sender_name, chat_id, message_id) VALUES (?, ?, ?)', (sender_name, chat_id, message_id))
+    conn.commit() 
+    close_connection(conn,cursor)
+
+# Function to fetch all senders 
+def fetch_all_chats():
+    conn = connect_db() 
+    cursor = conn.cursor() 
+    cursor.execute('SELECT sender_name,chat_id FROM messages GROUP BY chat_id')
+    chats = cursor.fetchall()
+    close_connection(conn,cursor)
+    return chats
+
+# Function to fethc All message
+def fetch_all_messages_by_chat(chat_id):
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT message_id FROM messages WHERE chat_id = ?",(chat_id,))
+    messages = cursor.fetchall()
+    close_connection(conn,cursor)
+    return messages
+
+# Function to delete All message After reply it 
+def delete_all_message_by_chat(chat_id):
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM messages WHERE chat_id = ?',(chat_id,))
+    close_connection(conn,cursor) 
