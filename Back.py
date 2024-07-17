@@ -4,13 +4,15 @@ from dotenv import load_dotenv
 import UI
 import os
 from database import insert_topic, insert_source, fetch_all_topics,fetch_all_sources, fetch_target_source,\
-                     create_tables, check_topic,check_if_admin,insert_admin,insert_message
+                     create_tables, check_topic,check_if_admin,insert_admin,insert_message,fetch_all_chats,\
+                     fetch_all_messages_by_chat
 # Load environment variables from .env file
 load_dotenv()
 
 # Get the bot token from environment variables
 TOKEN_API = os.getenv("TOKEN_API")
 KEY = os.getenv("KEY")
+SUPER_ADMIN_ID =os.getenv("SUPER_ADMIN_ID")
 
 # Create tables if they do not exist
 create_tables()
@@ -76,7 +78,7 @@ def save_admin(message):
 # Handler to process the user's message after they click /sendMessage
 @bot.message_handler(commands=['sendMessage'])
 def handle_send_message_command(message):
-    bot.send_message(message.chat.id, "Please enter your message:")
+    bot.send_message(message.chat.id, "من فضلك أدخل رسالتك:")
     bot.register_next_step_handler(message, save_message)
 
 # Function to save the user's message in the database
@@ -88,15 +90,59 @@ def save_message(message):
         # Insert message into the database
         insert_message(sender_name, chat_id, message_id)
         # Notify user that the message has been saved
-        bot.send_message(message.chat.id, "Your message has been saved in the database.") 
+        bot.send_message(message.chat.id, "تم حفظ رسالتك في قاعدة البيانات.") 
     except Exception as e:
         print(f"Error occurred: {str(e)}")
+
 # Handler for the command that triggers the prompt in Arabic
 @bot.message_handler(func=lambda message: message.text == '📩 ارسل سؤال')
 def send_question_command(message):
-    bot.send_message(message.chat.id, "Click here to send your question: /sendMessage")
-    
+    bot.send_message(message.chat.id, "اضغط هنا لإرسال سؤالك: /sendMessage")
 # ========================== # 
+# ========= Handle Question ======== # 
+# Handler for show all sender to SUPER ADMIN
+@bot.message_handler(func=lambda message: message.text == '❓ الأسئلة')
+def send_senders_list(message): 
+    # check Super admin 
+    chat_id = message.chat.id
+    if chat_id != int(SUPER_ADMIN_ID) : 
+        bot.reply_to(message , "أنت لست المشرف الأعلى.")
+        return 
+    # fetch all senders 
+    chats = fetch_all_chats()
+    if chats:
+        response = f"chats :\n"
+        for chat in chats:
+            response += f"{chat[0]} [/chat_{chat[1]}]\n"
+    else:
+        response =  "لا توجد محادثات."
+    bot.send_message(message.chat.id, response)
+# Handler for show all message from sender to SUPER ADMIN 
+@bot.message_handler(func=lambda message: message.text.startswith('/chat_'))
+def send_sender_massage(message):
+    chat_id = message.chat.id
+    if chat_id != int(SUPER_ADMIN_ID) : 
+        bot.reply_to(message , "أنت لست المشرف الأعلى.")
+        return  
+    # show all message for Super Admin
+    sender_chat_id = message.text.split("_")[1]
+    sender_messages = fetch_all_messages_by_chat(sender_chat_id)
+    if sender_messages : 
+        for msg in sender_messages : 
+            bot.copy_message(chat_id, from_chat_id=sender_chat_id, message_id=msg)
+        # show send reply 
+        bot.reply_to(message,f"I you want to reply him click /replay_{chat_id}")
+    else : 
+        bot.send_message(chat_id, "لا توجد رسائل.")
+    
+# Handler for send replay for user  
+@bot.message_handler(func=lambda message: message.text.startswith('/replay_'))
+def send_reply_for_sender(message): 
+    
+@bot.message_handler(commands=['removeChat'])
+def remove_chat(message):
+    ...
+# ================================== #
 # Handler for handling button 'teacher'
 @bot.message_handler(func=lambda message: message.text == '👳 شيخ')
 def handle_teacher(message):
