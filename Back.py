@@ -47,8 +47,9 @@ def restart_chat(message):
     remove_keyboard_markup = types.ReplyKeyboardRemove()
     bot.send_message(chat_id, "🔄 تم إعادة ضبط الدردشة. يرجى الضغط على 'ابدأ' للبدء مجددًا.", reply_markup=remove_keyboard_markup)
     handle_start(message)  # Call handle_start to display the 'Start' button
-
-# ======== Admin ========== # 
+# ============================== #
+# ======== Admin =============== # 
+# ============================== #
 # Handle Admin Level
 @bot.message_handler(commands=['addAdmin'])
 def add_admin(message): 
@@ -73,7 +74,7 @@ def save_admin(message):
     insert_admin(admin_name, chat_id)
     bot.send_message(chat_id, f"✅ تمت إضافتك كمسؤول، {admin_name}.")
     handle_teacher(message)
-# ========================== # 
+# =============================== # 
 # ======== Send Question ======== #
 # Handler to process the user's message after they click /sendMessage
 @bot.message_handler(commands=['sendMessage'])
@@ -99,7 +100,7 @@ def save_message(message):
 def send_question_command(message):
     bot.send_message(message.chat.id, "اضغط هنا لإرسال سؤالك: /sendMessage")
 
-# ========================== # 
+# ================================== # 
 # ========= Handle Question ======== # 
 # Handler for show all sender to SUPER ADMIN
 @bot.message_handler(func=lambda message: message.text == '❓ الأسئلة')
@@ -224,14 +225,14 @@ def handle_topics_student(message):
     if topics:
         response = "📚 المواضيع:\n"
         for topic_name, topic_id in topics:
-            response += f"{topic_name} [topic_{topic_id}]\n"
+            response += f"{topic_name} [/topic_{topic_id}]\n"
     else:
         response = "لا توجد مواضيع متاحة."
     
     bot.send_message(message.chat.id, response)
 
 # Handler for storing sources with message IDs
-@bot.message_handler(content_types=['document', 'audio'])
+@bot.message_handler(content_types=['document', 'audio','video'])
 def handle_media(message):
     # == CHECK IF ADMIN === # 
     is_admin = check_if_admin(message.chat.id)
@@ -263,7 +264,7 @@ def handle_media(message):
         bot.reply_to(message, "❌ يرجى تضمين #اسم_الموضوع #معرف_الموضوع #معرف_المصدر #اسم_المصدر في رسالتك لحفظ المصدر.")
 
 # Handler for sending sources based on source_id
-@bot.message_handler(func=lambda message: message.text.startswith('source_'))
+@bot.message_handler(func=lambda message: message.text.startswith('/source_'))
 def send_source(message):
     source_id = message.text.strip().split("_")[1]
     source = fetch_target_source(source_id)
@@ -273,7 +274,7 @@ def send_source(message):
         bot.send_message(message.chat.id, "❌ معرف غير صالح أو لا توجد مصادر.")
 
 # Handler for displaying all sources in a topic based on topic_id
-@bot.message_handler(func=lambda message: message.text.startswith('topic_'))
+@bot.message_handler(func=lambda message: message.text.startswith('/topic_'))
 def show_sources_in_topic(message):
     topic_id = message.text.strip().split('_')[1]
     sources = fetch_all_sources(topic_id)
@@ -281,7 +282,7 @@ def show_sources_in_topic(message):
     if sources:
         response = f"📚 مصادر الموضوع {topic_id}:\n"
         for source in sources:
-            response += f"{source[1]} [source_{source[0]}]\n"
+            response += f"{source[1]} [/source_{source[0]}]\n"
     else:
         response = f"لا توجد مصادر للموضوع {topic_id}."
     bot.send_message(message.chat.id, response)
