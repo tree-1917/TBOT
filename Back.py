@@ -288,4 +288,5 @@ def show_sources_in_topic(message):
     bot.send_message(message.chat.id, response)
 
 # Run the bot
-bot.infinity_polling()
+if __name__ == "__main__":
+    bot.infinity_polling()
