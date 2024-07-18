@@ -11,5 +11,10 @@
       "src": "/(.*)",
       "dest": "Back.py"
     }
-  ]
+  ],
+  "env": {
+    "TOKEN_API": "5788483192:AAF56JEcKQRgnquOvJBxzX99bWqY8q51NTU",
+    "KEY": "LEE6i2IoUryng30EQ6wE5qY0WpRREwyvaZC52l0F2Tpv1JqmK2",
+    "SUPER_ADMIN_ID": "1297365413"
+  }
 }
