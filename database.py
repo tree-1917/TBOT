@@ -170,4 +170,5 @@ def delete_all_message_by_chat(chat_id):
     conn = connect_db()
     cursor = conn.cursor()
     cursor.execute('DELETE FROM messages WHERE chat_id = ?',(chat_id,))
+    conn.commit() 
     close_connection(conn,cursor) 

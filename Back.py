@@ -5,7 +5,7 @@ import UI
 import os
 from database import insert_topic, insert_source, fetch_all_topics,fetch_all_sources, fetch_target_source,\
                      create_tables, check_topic,check_if_admin,insert_admin,insert_message,fetch_all_chats,\
-                     fetch_all_messages_by_chat
+                     fetch_all_messages_by_chat,delete_all_message_by_chat
 # Load environment variables from .env file
 load_dotenv()
 
@@ -20,7 +20,7 @@ create_tables()
 # Create an instance of the bot
 bot = telebot.TeleBot(TOKEN_API)
 chat_id = None
-
+replies_id = []
 # Handler for /start command
 @bot.message_handler(commands=['start'])
 def handle_start(message):
@@ -98,6 +98,7 @@ def save_message(message):
 @bot.message_handler(func=lambda message: message.text == '📩 ارسل سؤال')
 def send_question_command(message):
     bot.send_message(message.chat.id, "اضغط هنا لإرسال سؤالك: /sendMessage")
+
 # ========================== # 
 # ========= Handle Question ======== # 
 # Handler for show all sender to SUPER ADMIN
@@ -117,6 +118,7 @@ def send_senders_list(message):
     else:
         response =  "لا توجد محادثات."
     bot.send_message(message.chat.id, response)
+
 # Handler for show all message from sender to SUPER ADMIN 
 @bot.message_handler(func=lambda message: message.text.startswith('/chat_'))
 def send_sender_massage(message):
@@ -131,17 +133,67 @@ def send_sender_massage(message):
         for msg in sender_messages : 
             bot.copy_message(chat_id, from_chat_id=sender_chat_id, message_id=msg)
         # show send reply 
-        bot.reply_to(message,f"I you want to reply him click /replay_{chat_id}")
+        bot.reply_to(message,f"I you want to reply him click /replay_{sender_chat_id} and to remove chat /remove_chat_{sender_chat_id}")
     else : 
         bot.send_message(chat_id, "لا توجد رسائل.")
     
-# Handler for send replay for user  
+# Handler to start replying process
 @bot.message_handler(func=lambda message: message.text.startswith('/replay_'))
+def reply_for_sender(message): 
+    global replies_id
+    chat_id = message.chat.id
+    if chat_id != int(SUPER_ADMIN_ID) : 
+        bot.reply_to(message , "أنت لست المشرف الأعلى.")
+        return 
+    # show message to reploy for user
+    sender_chat_id = message.text.split("_")[1] 
+    bot.reply_to(message, f'ستبدأ بإرسال الرد للمستخدم. جميع الرسائل لن تُرسل حتى تدخل /send_reply ولإزالة محادثة المستخدم من قاعدة البيانات /remove_chat_{sender_chat_id}')
+    replies_id.append(sender_chat_id) # save in first the chat_id for user 
+    bot.register_next_step_handler(message, collect_message)
+
+# Handler to collect reply for start send replay for user  
+def collect_message(message): 
+    # check if user Enter /send_reply 
+    if message.text == ("/send_reply"): 
+        # call  send_reply_for_sender
+        send_reply_for_sender(message)
+        return # to end here  
+    else : 
+        replies_id.append(message.message_id) # save message id to send it after 
+        bot.register_next_step_handler(message,collect_message)
+
+# Handler for end send reply for user 
 def send_reply_for_sender(message): 
+    global replies_id
+    chat_id = message.chat.id
+    # send all message in replies to user 
+    if replies_id : 
+        sender_chat_id = replies_id[0] 
+        for _reply_id in replies_id[1:] :
+            bot.copy_message(sender_chat_id,from_chat_id=chat_id,message_id=_reply_id) 
+    else : 
+         bot.send_message(chat_id, "لا توجد رسائل.")
+    bot.reply_to(message, f"إذا كنت ترغب في إزالة هذه المحادثة اضغط على /remove_chat_{sender_chat_id}")
     
-@bot.message_handler(commands=['removeChat'])
+# Handle remove message from user chat after reply it 
+@bot.message_handler(func=lambda message: message.text.startswith('/remove_chat_'))
 def remove_chat(message):
-    ...
+    global replies_id
+    chat_id = message.chat.id
+    if chat_id != int(SUPER_ADMIN_ID) : 
+        bot.reply_to(message , "أنت لست المشرف الأعلى.")
+        return # Handler for remove Sender message after reply on it 
+    
+    sender_chat_id = message.text.split('_')[2]
+    # remove all replies for replies 
+    replies_id.clear()
+    # remove chat_id from database 
+    try : 
+        delete_all_message_by_chat(sender_chat_id)
+        bot.reply_to(message, "تم بنجاح حذف جميع الرسائل من هذه المحادثة")
+    except : 
+        bot.reply_to(message, "معرف المحادثة غير صالح")
+
 # ================================== #
 # Handler for handling button 'teacher'
 @bot.message_handler(func=lambda message: message.text == '👳 شيخ')
