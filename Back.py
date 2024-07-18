@@ -289,4 +289,4 @@ def show_sources_in_topic(message):
 
 # Run the bot
 if __name__ == "__main__":
-    bot.infinity_polling()
+    bot.polling()
